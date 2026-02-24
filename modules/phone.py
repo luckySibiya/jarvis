@@ -24,8 +24,10 @@ def _osascript(script: str) -> str:
 # --- Phone Calls ---
 
 @register("phone", "call")
-def make_call(number: str) -> str:
+def make_call(number: str = "") -> str:
     """Make a phone call via FaceTime (uses iPhone Continuity)."""
+    if not number or not number.strip():
+        return "Who would you like me to call, sir? Please say a name or phone number."
     # Clean the number
     clean = number.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
     try:
@@ -38,8 +40,10 @@ def make_call(number: str) -> str:
 
 
 @register("phone", "facetime")
-def facetime_call(number: str) -> str:
+def facetime_call(number: str = "") -> str:
     """Make a FaceTime video call."""
+    if not number or not number.strip():
+        return "Who would you like me to FaceTime, sir?"
     clean = number.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
     try:
         subprocess.Popen(["open", f"facetime:{clean}"])
@@ -50,8 +54,10 @@ def facetime_call(number: str) -> str:
 
 
 @register("phone", "facetime_audio")
-def facetime_audio(number: str) -> str:
+def facetime_audio(number: str = "") -> str:
     """Make a FaceTime audio call."""
+    if not number or not number.strip():
+        return "Who would you like me to FaceTime audio, sir?"
     clean = number.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
     try:
         subprocess.Popen(["open", f"facetime-audio:{clean}"])
@@ -64,8 +70,12 @@ def facetime_audio(number: str) -> str:
 # --- Text Messages ---
 
 @register("phone", "send_message")
-def send_imessage(to: str, message: str) -> str:
+def send_imessage(to: str = "", message: str = "") -> str:
     """Send an iMessage/SMS via the Messages app."""
+    if not to or not to.strip():
+        return "Who would you like me to send a message to, sir?"
+    if not message or not message.strip():
+        return f"What would you like me to say to {to}, sir?"
     # Escape quotes for AppleScript
     safe_msg = message.replace('"', '\\"')
     safe_to = to.replace('"', '\\"')

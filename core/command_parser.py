@@ -133,6 +133,10 @@ IMPORTANT: If the user is asking a question, making conversation, or saying some
 that doesn't map to a specific action above, ALWAYS use category "chat" with action \
 "chat". Never use "unknown".
 
+IMPORTANT: Commands like "make a call", "send a text", "text someone", "call someone" \
+are phone actions even if no number/contact is given. Use phone.call or phone.send_message \
+with empty args — the handler will ask the user for details. Do NOT route these to chat.
+
 Rules:
 - For URLs without http/https, prepend "https://"
 - Stock symbols should be UPPERCASE
@@ -146,9 +150,11 @@ Rules:
 - "lock my computer" -> system.lock_screen
 - "turn on dark mode" -> system.dark_mode_on
 - "send email to john@gmail.com about meeting" -> system.send_email
-- "call 0712345678" or "call mom" -> phone.call
+- "call 0712345678" or "call mom" -> phone.call with number
+- "make a call" or "call someone" (no number given) -> phone.call with number ""
 - "facetime John" -> phone.facetime
 - "send a message to John saying I'm on my way" -> phone.send_message
+- "send a text" or "text someone" (no recipient given) -> phone.send_message with to "" and message ""
 - "read my messages" -> phone.read_messages
 - "check my emails" or "read my emails" -> system.read_emails
 - "read the first email" -> system.read_email_detail with index 1
