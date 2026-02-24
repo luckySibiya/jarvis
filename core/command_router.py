@@ -85,7 +85,10 @@ def _load_handlers():
     import modules.phone                # noqa: F401
     import modules.reader               # noqa: F401
     import modules.knowledge            # noqa: F401
+    import modules.knowledge_extended   # noqa: F401
     import modules.chat                 # noqa: F401
+    import modules.memory               # noqa: F401
+    import modules.smart_home           # noqa: F401
     _loaded = True
 
 

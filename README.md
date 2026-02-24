@@ -1,6 +1,6 @@
 # Jarvis - AI Personal Assistant
 
-A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with Python, powered by LLMs, with **76 commands** covering full system control, phone calls, iMessages, email, calendar, notes, reminders, Spotify, desktop automation, web automation, and natural conversation.
+A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with Python, powered by LLMs, with **113 commands** covering full system control, phone calls, iMessages, email, calendar, notes, reminders, Spotify, desktop automation, web automation, and natural conversation.
 
 ## Features
 
@@ -16,7 +16,12 @@ A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with P
 - **Email** — Send and read emails via Gmail
 - **Timers & Math** — Set voice-alert timers, calculate expressions
 - **Reading** — Read emails, files, selected text, notes aloud
-- **Knowledge** — Wikipedia, dictionary definitions, translations, synonyms
+- **Knowledge** — Wikipedia, dictionary, translations, movies, sports, recipes, jokes, unit conversion
+- **Smart Home** — HomeKit lights, thermostat, scenes via Shortcuts
+- **Device Control** — AirPlay, Bluetooth, Find My, audio switching, screen mirroring
+- **Persistent Memory** — Remember facts, contacts, preferences across sessions
+- **Routines** — Chain multiple commands into "good morning" / "good night" automations
+- **Advanced NLP** — Multi-command parsing ("do X and Y"), keyword fallback, context-aware
 - **Smart Chat** — Knowledge-enriched responses with real-time web data
 - **Clipboard & Notifications** — Read/write clipboard, send macOS notifications
 - **Shell Commands** — Run any terminal command by voice
@@ -189,6 +194,56 @@ python main.py --mode voice
 | "define ubiquitous" | Dictionary definition |
 | "translate hello to Spanish" | Translate text to any language |
 | "synonyms for happy" | Find synonyms |
+| "tell me about the movie Inception" | Movie info |
+| "sports scores" / "soccer scores" | Live sports scores (ESPN) |
+| "recipe for pasta carbonara" | Recipe with ingredients |
+| "tell me a joke" | Random joke |
+| "tell me a fun fact" | Random fun fact |
+| "give me a quote" | Inspirational quote |
+| "convert 5 miles to km" | Unit conversion |
+| "info about Japan" | Country info (capital, population) |
+| "what time is it in Tokyo" | World clock |
+| "how many days until Christmas" | Countdown to any date |
+
+### Smart Home (HomeKit)
+| Command | What it does |
+|---|---|
+| "turn on the lights" | HomeKit lights on |
+| "turn off the lights in bedroom" | Room-specific light control |
+| "set brightness to 50" | Adjust smart light brightness |
+| "set thermostat to 72" | Thermostat control |
+| "activate movie night scene" | Trigger HomeKit scene |
+| "smart home status" | Check device statuses |
+
+### Device Control
+| Command | What it does |
+|---|---|
+| "AirPlay to Apple TV" | Stream to a device |
+| "switch audio to AirPods" | Change audio output |
+| "find my iPhone" | Play sound on lost device |
+| "AirDrop" | Open AirDrop |
+| "connect to AirPods" | Connect Bluetooth device |
+| "disconnect AirPods" | Disconnect Bluetooth device |
+| "list Bluetooth devices" | See paired devices |
+| "mirror screen to Apple TV" | Start screen mirroring |
+
+### Memory & Learning
+| Command | What it does |
+|---|---|
+| "remember my name is Lucky" | Store a fact (persists across sessions) |
+| "what's my name" | Recall a stored fact |
+| "forget my name" | Remove a stored fact |
+| "save contact mom 0712345678" | Save a contact nickname |
+| "what's mom's number" | Look up a saved contact |
+| "list my memory" | See all stored facts & contacts |
+
+### Routines
+| Command | What it does |
+|---|---|
+| "create morning routine: weather, read emails, calendar" | Chain commands |
+| "run my morning routine" / "good morning" | Execute a routine |
+| "list my routines" | See all routines |
+| "delete morning routine" | Remove a routine |
 
 ### Reading
 | Command | What it does |
@@ -219,8 +274,9 @@ jarvis/
 ├── requirements.txt
 ├── .env.example
 ├── core/
-│   ├── command_parser.py      # LLM-powered NL → structured commands (76 actions)
+│   ├── command_parser.py      # LLM-powered NL → structured commands (113 actions)
 │   ├── command_router.py      # @register decorator, dispatches to modules
+│   ├── nlp_engine.py          # Multi-command splitting, keyword fallback, entities
 │   ├── voice_input.py         # Speech-to-text with wake word detection
 │   └── voice_output.py        # Text-to-speech (Daniel British male voice)
 ├── modules/
@@ -238,7 +294,10 @@ jarvis/
 │   ├── email_sender.py        # Send emails via Gmail SMTP
 │   ├── phone.py               # Phone calls, FaceTime, iMessages
 │   ├── reader.py              # Read emails, files, calendar, reminders, notes
-│   └── knowledge.py           # Wikipedia, dictionary, translations, synonyms
+│   ├── knowledge.py           # Wikipedia, dictionary, translations, synonyms
+│   ├── knowledge_extended.py  # Movies, sports, recipes, jokes, units, countries
+│   ├── smart_home.py          # HomeKit lights, thermostat, scenes via Shortcuts
+│   └── memory.py              # Persistent memory, contacts, routines, learning
 └── utils/
     ├── logger.py              # Centralized logging
     └── helpers.py             # Shared utilities
@@ -251,7 +310,7 @@ User speaks/types
     ↓
 command_parser.py  →  LLM classifies intent → Command(category, action, args)
     ↓
-command_router.py  →  Looks up handler by (category, action) from 76 registered handlers
+command_router.py  →  Looks up handler by (category, action) from 113 registered handlers
     ↓
 Module handler     →  Executes action, returns result string
     ↓

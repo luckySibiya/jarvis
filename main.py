@@ -4,7 +4,7 @@ import argparse
 
 from core.voice_input import listen, wait_for_wake_word
 from core.voice_output import speak
-from core.command_parser import parse_command
+from core.command_parser import parse_command, parse_multi_command
 from core.command_router import route_command, consume_pending
 from config import EXIT_COMMANDS
 from utils.logger import setup_logger
@@ -20,22 +20,54 @@ def handle_command(user_input: str, logger) -> bool:
         # Check if there's a pending follow-up (e.g. "who to call?")
         result = consume_pending(user_input)
 
-        if result is None:
-            # No pending action — parse as a new command
-            command = parse_command(user_input)
-            result = route_command(command)
+        if result is not None:
+            speak(result)
+            _log_and_save(user_input, result)
+            return True
 
-        speak(result)
+        # Parse — supports multi-commands ("do X and Y")
+        commands = parse_multi_command(user_input)
 
-        # Feed results into chat memory so Jarvis has full context
-        from modules.chat import _save_exchange
-        _save_exchange(user_input, result)
+        results = []
+        for command in commands:
+            res = route_command(command)
+            results.append(res)
+            speak(res)
+            # Log to memory for learning
+            _log_command(user_input, command.category, command.action)
+
+        # Save full exchange to chat memory
+        full_result = " ".join(results)
+        _save_to_chat(user_input, full_result)
 
     except Exception as e:
         logger.error(f"Error: {e}")
         speak(f"Sorry, something went wrong: {e}")
 
     return True
+
+
+def _log_and_save(user_input: str, result: str):
+    """Save exchange to chat memory."""
+    _save_to_chat(user_input, result)
+
+
+def _save_to_chat(user_input: str, result: str):
+    """Feed results into chat memory so Jarvis has full context."""
+    try:
+        from modules.chat import _save_exchange
+        _save_exchange(user_input, result)
+    except Exception:
+        pass
+
+
+def _log_command(user_input: str, category: str, action: str):
+    """Log command to persistent memory for learning patterns."""
+    try:
+        from modules.memory import log_command
+        log_command(user_input, category, action)
+    except Exception:
+        pass
 
 
 def run_always_on(logger):

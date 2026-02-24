@@ -35,7 +35,8 @@ interpret the user's natural language input and return a structured JSON command
 
 You MUST respond with ONLY valid JSON (no markdown, no explanation, no code fences). \
 The JSON must have:
-- "category": one of "web_auto", "desktop", "scrape", "system", "spotify", "chat"
+- "category": one of "web_auto", "desktop", "scrape", "system", "spotify", "phone", \
+"knowledge", "smart_home", "device", "memory", "routine", "chat"
 - "action": the specific action to perform
 - "args": a dictionary of arguments for the action
 
@@ -130,6 +131,51 @@ knowledge (Real-world knowledge lookups):
   - "define": Define a word. args: {"word": "ubiquitous"}
   - "translate": Translate text to another language. args: {"text": "hello", "to_language": "spanish"}
   - "synonym": Get synonyms for a word. args: {"word": "happy"}
+  - "movie": Movie info. args: {"title": "Inception"}
+  - "tv_show": TV show info. args: {"title": "Breaking Bad"}
+  - "sports": Sports scores. args: {"sport": "soccer", "team": ""}
+  - "recipe": Recipe lookup. args: {"dish": "pasta carbonara"}
+  - "joke": Random joke. args: {}
+  - "fact": Random fun fact. args: {}
+  - "quote": Inspirational quote. args: {}
+  - "convert": Unit conversion. args: {"expression": "5 miles to km"}
+  - "country": Country info. args: {"country": "Japan"}
+  - "timezone": Time in a city. args: {"city": "Tokyo"}
+  - "days_until": Days until a date. args: {"date_str": "Christmas"}
+
+smart_home (HomeKit smart home control):
+  - "lights_on": Turn on lights. args: {"room": ""} (room optional)
+  - "lights_off": Turn off lights. args: {"room": ""}
+  - "set_brightness": Set light brightness. args: {"level": 50, "room": ""}
+  - "set_thermostat": Set thermostat. args: {"temperature": 72}
+  - "scene": Activate a HomeKit scene. args: {"name": "Movie Night"}
+  - "status": Smart home device status. args: {}
+
+device (Device control — AirPlay, Bluetooth, Find My):
+  - "airplay": AirPlay to device. args: {"device": "Living Room TV"}
+  - "audio_output": Switch audio output. args: {"device": "AirPods"}
+  - "find_my": Find my device. args: {"device": "iphone"}
+  - "airdrop": Open AirDrop. args: {"path": ""}
+  - "connect_bluetooth": Connect Bluetooth device. args: {"device": "AirPods"}
+  - "disconnect_bluetooth": Disconnect Bluetooth. args: {"device": "AirPods"}
+  - "list_bluetooth": List Bluetooth devices. args: {}
+  - "screen_mirror": Screen mirror to device. args: {"device": "Apple TV"}
+
+memory (Persistent memory — remembers across sessions):
+  - "remember": Remember a fact. args: {"key": "my name", "value": "Lucky"}
+  - "recall": Recall a fact. args: {"key": "my name"}
+  - "forget": Forget a fact. args: {"key": "my name"}
+  - "save_contact": Save a contact. args: {"name": "mom", "number": "+27123456", "email": ""}
+  - "get_contact": Look up a contact. args: {"name": "mom"}
+  - "set_preference": Set preference. args: {"key": "music_genre", "value": "jazz"}
+  - "get_preference": Get preference. args: {"key": "music_genre"}
+  - "list_memory": List all stored memory. args: {}
+
+routine (Automated routines — chain multiple commands):
+  - "create": Create a routine. args: {"name": "good morning", "commands": "weather,read my emails,read my calendar"}
+  - "run": Run a routine. args: {"name": "good morning"}
+  - "list": List all routines. args: {}
+  - "delete": Delete a routine. args: {"name": "good morning"}
 
 chat (Conversational responses):
   - "chat": General conversation, questions, jokes, opinions, greetings, or anything \
@@ -176,7 +222,30 @@ Rules:
 - "define ubiquitous" -> knowledge.define
 - "translate hello to Spanish" -> knowledge.translate
 - "synonyms for happy" -> knowledge.synonym
-- General factual questions like "what is black hole" -> chat.chat (NOT knowledge)\
+- General factual questions like "what is black hole" -> chat.chat (NOT knowledge)
+- "turn on the lights" / "lights on" -> smart_home.lights_on
+- "turn off the lights in bedroom" -> smart_home.lights_off with room "bedroom"
+- "set thermostat to 72" -> smart_home.set_thermostat
+- "activate movie night scene" -> smart_home.scene
+- "airplay to Apple TV" -> device.airplay
+- "switch audio to AirPods" -> device.audio_output
+- "find my iPhone" -> device.find_my
+- "connect to AirPods" -> device.connect_bluetooth
+- "list bluetooth devices" -> device.list_bluetooth
+- "remember my name is Lucky" -> memory.remember with key "my name" value "Lucky"
+- "what's my name" (if previously stored) -> memory.recall with key "name"
+- "save contact mom 0712345678" -> memory.save_contact
+- "create a morning routine" -> routine.create
+- "run my morning routine" / "good morning" -> routine.run
+- "what's the score" / "sports scores" -> knowledge.sports
+- "recipe for pasta" -> knowledge.recipe
+- "tell me a joke" -> knowledge.joke
+- "tell me a fact" -> knowledge.fact
+- "convert 5 miles to km" -> knowledge.convert
+- "what time is it in Tokyo" -> knowledge.timezone
+- "how many days until Christmas" -> knowledge.days_until
+- "info about Japan" -> knowledge.country
+- "tell me about the movie Inception" -> knowledge.movie\
 """
 
 
@@ -295,7 +364,10 @@ _PROVIDERS = [
 
 
 def parse_command(user_input: str) -> Command:
-    """Parse user input using LLM APIs with fallback chain."""
+    """Parse user input using LLM APIs with keyword fallback.
+
+    Chain: LLM providers (Gemini → Groq → Anthropic) → keyword fallback.
+    """
     text = user_input.strip()
 
     for name, provider in _PROVIDERS:
@@ -309,5 +381,37 @@ def parse_command(user_input: str) -> Command:
                 raw_input=text,
             )
 
-    logger.error("All LLM providers failed")
-    return Command(category="unknown", action="unknown", raw_input=text)
+    # All LLM providers failed — use keyword-based fallback
+    logger.warning("All LLM providers failed, trying keyword fallback")
+    try:
+        from core.nlp_engine import keyword_parse
+        result = keyword_parse(text)
+        if result:
+            logger.info(f"Parsed by keyword fallback: {result}")
+            return Command(
+                category=result.get("category", "unknown"),
+                action=result.get("action", "unknown"),
+                args=result.get("args", {}),
+                raw_input=text,
+            )
+    except Exception as e:
+        logger.warning(f"Keyword fallback failed: {e}")
+
+    # Ultimate fallback — send to chat
+    logger.info("Falling back to chat")
+    return Command(category="chat", action="chat",
+                   args={"message": text}, raw_input=text)
+
+
+def parse_multi_command(user_input: str) -> list[Command]:
+    """Parse input that may contain multiple commands joined by 'and'/'then'.
+
+    Returns a list of Command objects. Single commands return a 1-element list.
+    """
+    try:
+        from core.nlp_engine import split_commands
+        parts = split_commands(user_input.strip())
+    except Exception:
+        parts = [user_input.strip()]
+
+    return [parse_command(part) for part in parts]
