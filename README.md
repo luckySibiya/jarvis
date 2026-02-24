@@ -1,6 +1,6 @@
 # Jarvis - AI Personal Assistant
 
-A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with Python, powered by LLMs, with **56 commands** covering full system control, Spotify, desktop automation, web automation, and natural conversation.
+A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with Python, powered by LLMs, with **72 commands** covering full system control, phone calls, iMessages, email, calendar, notes, reminders, Spotify, desktop automation, web automation, and natural conversation.
 
 ## Features
 
@@ -11,8 +11,11 @@ A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with P
 - **Desktop Automation** — Open/close apps, type text, take screenshots, click coordinates
 - **Web Automation** — Google searches, open URLs via Selenium-controlled Chrome
 - **Web Scraping** — Weather, news headlines, stock prices, scrape any webpage
+- **Phone Calls & Messages** — Make calls via iPhone Continuity, FaceTime, send/read iMessages
+- **Calendar, Reminders & Notes** — Read/create calendar events, reminders, and notes
+- **Email** — Send and read emails via Gmail
 - **Timers & Math** — Set voice-alert timers, calculate expressions
-- **Email** — Send emails via Gmail SMTP
+- **Reading** — Read emails, files, selected text, notes aloud
 - **Clipboard & Notifications** — Read/write clipboard, send macOS notifications
 - **Shell Commands** — Run any terminal command by voice
 - **British Male Voice** — Daniel (UK English) text-to-speech for the authentic Jarvis feel
@@ -66,7 +69,7 @@ python main.py --mode text
 python main.py --mode voice
 ```
 
-## All 56 Commands
+## All 72 Commands
 
 ### Spotify
 | Command | What it does |
@@ -149,10 +152,39 @@ python main.py --mode voice
 | "copy hello world to clipboard" | Write to clipboard |
 | "send a notification saying meeting in 5 minutes" | macOS notification |
 
+### Phone Calls & Messages
+| Command | What it does |
+|---|---|
+| "call 0712345678" | Make a phone call (via iPhone Continuity) |
+| "FaceTime John" | FaceTime video call |
+| "FaceTime audio mom" | FaceTime audio call |
+| "send a message to John saying I'm on my way" | Send iMessage/SMS |
+| "read my messages" | Read recent iMessages |
+| "read messages from John" | Read messages from a specific contact |
+
 ### Email
 | Command | What it does |
 |---|---|
 | "send email to john@gmail.com about meeting" | Send via Gmail SMTP |
+| "check my emails" / "read my emails" | Read latest 5 inbox emails |
+| "read the first email" | Read full content of most recent email |
+
+### Calendar, Reminders & Notes
+| Command | What it does |
+|---|---|
+| "what's on my calendar" | Today's calendar events |
+| "what's on my calendar this week" | Next 7 days of events |
+| "add a meeting on March 1st at 2pm" | Create a calendar event |
+| "read my reminders" | List pending reminders |
+| "remind me to buy groceries" | Add a new reminder |
+| "read my notes" | List recent notes |
+| "create a note called Ideas" | Create a new note |
+
+### Reading
+| Command | What it does |
+|---|---|
+| "read what's selected" | Read highlighted text on screen aloud |
+| "read the file /path/to/file.txt" | Read a text file aloud |
 
 ### Conversation
 | Command | What it does |
@@ -177,7 +209,7 @@ jarvis/
 ├── requirements.txt
 ├── .env.example
 ├── core/
-│   ├── command_parser.py      # LLM-powered NL → structured commands (56 actions)
+│   ├── command_parser.py      # LLM-powered NL → structured commands (72 actions)
 │   ├── command_router.py      # @register decorator, dispatches to modules
 │   ├── voice_input.py         # Speech-to-text with wake word detection
 │   └── voice_output.py        # Text-to-speech (Daniel British male voice)
@@ -193,7 +225,9 @@ jarvis/
 │   ├── spotify_control.py     # Play/pause/next/previous/current/search
 │   ├── timer.py               # Set/cancel voice-alert timers
 │   ├── calculator.py          # Safe math expression evaluation
-│   └── email_sender.py        # Send emails via Gmail SMTP
+│   ├── email_sender.py        # Send emails via Gmail SMTP
+│   ├── phone.py               # Phone calls, FaceTime, iMessages
+│   └── reader.py              # Read emails, files, calendar, reminders, notes
 └── utils/
     ├── logger.py              # Centralized logging
     └── helpers.py             # Shared utilities
@@ -206,7 +240,7 @@ User speaks/types
     ↓
 command_parser.py  →  LLM classifies intent → Command(category, action, args)
     ↓
-command_router.py  →  Looks up handler by (category, action) from 56 registered handlers
+command_router.py  →  Looks up handler by (category, action) from 72 registered handlers
     ↓
 Module handler     →  Executes action, returns result string
     ↓
@@ -218,6 +252,8 @@ voice_output.py    →  Speaks result aloud (Daniel voice) + prints to console
 On first run, macOS will ask for:
 - **Microphone** — System Settings → Privacy & Security → Microphone → allow Terminal/VS Code
 - **Accessibility** — System Settings → Privacy & Security → Accessibility → allow Terminal/VS Code (needed for PyAutoGUI)
+- **Contacts, Calendar, Reminders, Notes** — Allow access when prompted (needed for PIM features)
+- **Phone Calls** — Requires iPhone on same iCloud account with "Calls on Other Devices" enabled in iPhone Settings → Phone
 
 ## Shell Alias (Optional)
 

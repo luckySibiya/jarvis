@@ -35,6 +35,8 @@ def _load_handlers():
     import modules.timer                # noqa: F401
     import modules.calculator           # noqa: F401
     import modules.email_sender         # noqa: F401
+    import modules.phone                # noqa: F401
+    import modules.reader               # noqa: F401
     import modules.chat                 # noqa: F401
     _loaded = True
 

@@ -106,6 +106,25 @@ system (OS-level commands):
   - "send_email": Send email. args: {"to": "a@b.com", "subject": "Hi", "body": "text"}
   - "run_command": Run any shell command. args: {"command": "ls -la"}
 
+phone (Calls & messages — uses iPhone via macOS Continuity):
+  - "call": Make a phone call. args: {"number": "+1234567890"}
+  - "facetime": FaceTime video call. args: {"number": "+1234567890"}
+  - "facetime_audio": FaceTime audio call. args: {"number": "+1234567890"}
+  - "send_message": Send an iMessage/text. args: {"to": "+1234567890", "message": "hey"}
+  - "read_messages": Read recent messages. args: {"contact": "John"} (contact can be "")
+
+system (continued — reading & PIM):
+  - "read_emails": Read latest inbox emails. args: {"count": 5}
+  - "read_email_detail": Read full content of email N. args: {"index": 1}
+  - "read_file": Read a file aloud. args: {"path": "/Users/.../file.txt"}
+  - "read_calendar": Read upcoming calendar events. args: {"days": 1}
+  - "read_reminders": Read pending reminders. args: {}
+  - "add_reminder": Add a reminder. args: {"text": "Buy groceries"}
+  - "add_event": Add a calendar event. args: {"title": "Meeting", "date": "2026-03-01", "time": "14:00"}
+  - "read_notes": Read recent notes from Notes app. args: {}
+  - "create_note": Create a note. args: {"title": "Ideas", "body": "Some text"}
+  - "read_selected": Read the currently selected text on screen. args: {}
+
 chat (Conversational responses):
   - "chat": General conversation, questions, jokes, opinions, greetings, or anything \
 that is NOT a specific action above. args: {"message": "the user's full message"}
@@ -126,7 +145,21 @@ Rules:
 - "what's 25 times 4" or "calculate 100/3" -> system.calculate
 - "lock my computer" -> system.lock_screen
 - "turn on dark mode" -> system.dark_mode_on
-- "send email to john@gmail.com about meeting" -> system.send_email\
+- "send email to john@gmail.com about meeting" -> system.send_email
+- "call 0712345678" or "call mom" -> phone.call
+- "facetime John" -> phone.facetime
+- "send a message to John saying I'm on my way" -> phone.send_message
+- "read my messages" -> phone.read_messages
+- "check my emails" or "read my emails" -> system.read_emails
+- "read the first email" -> system.read_email_detail with index 1
+- "what's on my calendar" -> system.read_calendar
+- "read my reminders" -> system.read_reminders
+- "remind me to buy groceries" -> system.add_reminder
+- "add a meeting on March 1st at 2pm" -> system.add_event
+- "read my notes" -> system.read_notes
+- "create a note called Ideas" -> system.create_note
+- "read what's selected" or "read the screen" -> system.read_selected
+- "read this file /path/to/file" -> system.read_file\
 """
 
 
