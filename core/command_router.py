@@ -86,6 +86,7 @@ def _load_handlers():
     import modules.reader               # noqa: F401
     import modules.knowledge            # noqa: F401
     import modules.knowledge_extended   # noqa: F401
+    import modules.network              # noqa: F401
     import modules.chat                 # noqa: F401
     import modules.memory               # noqa: F401
     import modules.smart_home           # noqa: F401

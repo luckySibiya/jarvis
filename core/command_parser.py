@@ -36,7 +36,7 @@ interpret the user's natural language input and return a structured JSON command
 You MUST respond with ONLY valid JSON (no markdown, no explanation, no code fences). \
 The JSON must have:
 - "category": one of "web_auto", "desktop", "scrape", "system", "spotify", "phone", \
-"knowledge", "smart_home", "device", "memory", "routine", "chat"
+"knowledge", "smart_home", "device", "memory", "routine", "network", "chat"
 - "action": the specific action to perform
 - "args": a dictionary of arguments for the action
 
@@ -171,6 +171,14 @@ memory (Persistent memory — remembers across sessions):
   - "get_preference": Get preference. args: {"key": "music_genre"}
   - "list_memory": List all stored memory. args: {}
 
+network (Network scanning and device discovery):
+  - "scan": Scan local network for all connected devices. args: {}
+  - "who_is_connected": List devices on the WiFi. args: {}
+  - "device_count": Count devices on the network. args: {}
+  - "ping": Ping a device/address. args: {"target": "192.168.1.1"}
+  - "speed_test": Run a network speed test. args: {}
+  - "local_ip": Get local IP address. args: {}
+
 routine (Automated routines — chain multiple commands):
   - "create": Create a routine. args: {"name": "good morning", "commands": "weather,read my emails,read my calendar"}
   - "run": Run a routine. args: {"name": "good morning"}
@@ -245,7 +253,15 @@ Rules:
 - "what time is it in Tokyo" -> knowledge.timezone
 - "how many days until Christmas" -> knowledge.days_until
 - "info about Japan" -> knowledge.country
-- "tell me about the movie Inception" -> knowledge.movie\
+- "tell me about the movie Inception" -> knowledge.movie
+- "scan the network" or "what devices are connected" -> network.scan
+- "who is on my wifi" -> network.who_is_connected
+- "how many devices on the network" -> network.device_count
+- "ping google.com" -> network.ping
+- "run a speed test" -> network.speed_test
+- "turn off devices on my wifi" -> This is NOT possible for security reasons. \
+Route to chat.chat and explain that you cannot remotely power off other people's \
+devices, but you can scan the network to see what's connected (network.scan)\
 """
 
 
