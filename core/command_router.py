@@ -84,6 +84,7 @@ def _load_handlers():
     import modules.email_sender         # noqa: F401
     import modules.phone                # noqa: F401
     import modules.reader               # noqa: F401
+    import modules.knowledge            # noqa: F401
     import modules.chat                 # noqa: F401
     _loaded = True
 

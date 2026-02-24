@@ -125,6 +125,12 @@ system (continued — reading & PIM):
   - "create_note": Create a note. args: {"title": "Ideas", "body": "Some text"}
   - "read_selected": Read the currently selected text on screen. args: {}
 
+knowledge (Real-world knowledge lookups):
+  - "wikipedia": Look up a topic on Wikipedia. args: {"topic": "quantum computing"}
+  - "define": Define a word. args: {"word": "ubiquitous"}
+  - "translate": Translate text to another language. args: {"text": "hello", "to_language": "spanish"}
+  - "synonym": Get synonyms for a word. args: {"word": "happy"}
+
 chat (Conversational responses):
   - "chat": General conversation, questions, jokes, opinions, greetings, or anything \
 that is NOT a specific action above. args: {"message": "the user's full message"}
@@ -165,7 +171,12 @@ Rules:
 - "read my notes" -> system.read_notes
 - "create a note called Ideas" -> system.create_note
 - "read what's selected" or "read the screen" -> system.read_selected
-- "read this file /path/to/file" -> system.read_file\
+- "read this file /path/to/file" -> system.read_file
+- "look up quantum computing on Wikipedia" -> knowledge.wikipedia
+- "define ubiquitous" -> knowledge.define
+- "translate hello to Spanish" -> knowledge.translate
+- "synonyms for happy" -> knowledge.synonym
+- General factual questions like "what is black hole" -> chat.chat (NOT knowledge)\
 """
 
 
@@ -183,16 +194,39 @@ def _parse_json(text: str) -> dict:
 _gemini_disabled = False
 
 
+def _build_context_prompt(user_input: str) -> str:
+    """Build the prompt with conversation context so the parser understands follow-ups."""
+    try:
+        from modules.chat import get_history
+        history = get_history()
+        if history:
+            # Include last 6 messages for context
+            recent = history[-6:]
+            context_lines = []
+            for msg in recent:
+                role = "User" if msg["role"] == "user" else "Jarvis"
+                context_lines.append(f"{role}: {msg['content']}")
+            context = "\n".join(context_lines)
+            return (
+                f"Recent conversation for context:\n{context}\n\n"
+                f"Now classify this new user input: {user_input}"
+            )
+    except Exception:
+        pass
+    return f"User input: {user_input}"
+
+
 def _try_gemini(user_input: str) -> dict | None:
     """Try Google Gemini API."""
     global _gemini_disabled
     if not GOOGLE_API_KEY or _gemini_disabled:
         return None
     try:
+        prompt = _build_context_prompt(user_input)
         client = genai.Client(api_key=GOOGLE_API_KEY)
         response = client.models.generate_content(
             model=GEMINI_MODEL,
-            contents=f"{SYSTEM_PROMPT}\n\nUser input: {user_input}",
+            contents=f"{SYSTEM_PROMPT}\n\n{prompt}",
         )
         result = _parse_json(response.text)
         logger.info(f"Gemini parsed: {result}")
@@ -212,12 +246,13 @@ def _try_groq(user_input: str) -> dict | None:
     if not GROQ_API_KEY:
         return None
     try:
+        prompt = _build_context_prompt(user_input)
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_input},
+                {"role": "user", "content": prompt},
             ],
             max_tokens=256,
             temperature=0,
@@ -235,12 +270,13 @@ def _try_anthropic(user_input: str) -> dict | None:
     if not ANTHROPIC_API_KEY:
         return None
     try:
+        prompt = _build_context_prompt(user_input)
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         message = client.messages.create(
             model=CLAUDE_MODEL,
             max_tokens=256,
             system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_input}],
+            messages=[{"role": "user", "content": prompt}],
         )
         result = _parse_json(message.content[0].text)
         logger.info(f"Anthropic parsed: {result}")

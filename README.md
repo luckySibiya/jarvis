@@ -1,6 +1,6 @@
 # Jarvis - AI Personal Assistant
 
-A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with Python, powered by LLMs, with **72 commands** covering full system control, phone calls, iMessages, email, calendar, notes, reminders, Spotify, desktop automation, web automation, and natural conversation.
+A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with Python, powered by LLMs, with **76 commands** covering full system control, phone calls, iMessages, email, calendar, notes, reminders, Spotify, desktop automation, web automation, and natural conversation.
 
 ## Features
 
@@ -16,6 +16,8 @@ A voice-activated personal assistant inspired by Iron Man's Jarvis. Built with P
 - **Email** — Send and read emails via Gmail
 - **Timers & Math** — Set voice-alert timers, calculate expressions
 - **Reading** — Read emails, files, selected text, notes aloud
+- **Knowledge** — Wikipedia, dictionary definitions, translations, synonyms
+- **Smart Chat** — Knowledge-enriched responses with real-time web data
 - **Clipboard & Notifications** — Read/write clipboard, send macOS notifications
 - **Shell Commands** — Run any terminal command by voice
 - **British Male Voice** — Daniel (UK English) text-to-speech for the authentic Jarvis feel
@@ -69,7 +71,7 @@ python main.py --mode text
 python main.py --mode voice
 ```
 
-## All 72 Commands
+## All 76 Commands
 
 ### Spotify
 | Command | What it does |
@@ -180,6 +182,14 @@ python main.py --mode voice
 | "read my notes" | List recent notes |
 | "create a note called Ideas" | Create a new note |
 
+### Knowledge
+| Command | What it does |
+|---|---|
+| "look up quantum computing on Wikipedia" | Wikipedia summary |
+| "define ubiquitous" | Dictionary definition |
+| "translate hello to Spanish" | Translate text to any language |
+| "synonyms for happy" | Find synonyms |
+
 ### Reading
 | Command | What it does |
 |---|---|
@@ -209,7 +219,7 @@ jarvis/
 ├── requirements.txt
 ├── .env.example
 ├── core/
-│   ├── command_parser.py      # LLM-powered NL → structured commands (72 actions)
+│   ├── command_parser.py      # LLM-powered NL → structured commands (76 actions)
 │   ├── command_router.py      # @register decorator, dispatches to modules
 │   ├── voice_input.py         # Speech-to-text with wake word detection
 │   └── voice_output.py        # Text-to-speech (Daniel British male voice)
@@ -227,7 +237,8 @@ jarvis/
 │   ├── calculator.py          # Safe math expression evaluation
 │   ├── email_sender.py        # Send emails via Gmail SMTP
 │   ├── phone.py               # Phone calls, FaceTime, iMessages
-│   └── reader.py              # Read emails, files, calendar, reminders, notes
+│   ├── reader.py              # Read emails, files, calendar, reminders, notes
+│   └── knowledge.py           # Wikipedia, dictionary, translations, synonyms
 └── utils/
     ├── logger.py              # Centralized logging
     └── helpers.py             # Shared utilities
@@ -240,7 +251,7 @@ User speaks/types
     ↓
 command_parser.py  →  LLM classifies intent → Command(category, action, args)
     ↓
-command_router.py  →  Looks up handler by (category, action) from 72 registered handlers
+command_router.py  →  Looks up handler by (category, action) from 76 registered handlers
     ↓
 Module handler     →  Executes action, returns result string
     ↓
