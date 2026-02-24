@@ -175,20 +175,56 @@ def _chat_gemini(messages: list[dict]) -> str | None:
         return None
 
 
+_groq_chat_disabled = False
+
+# Backup Groq model with separate rate limits
+GROQ_BACKUP_MODEL = "llama-3.1-8b-instant"
+_groq_backup_chat_disabled = False
+
+
 def _chat_groq(messages: list[dict]) -> str | None:
-    if not GROQ_API_KEY:
+    global _groq_chat_disabled
+    if not GROQ_API_KEY or _groq_chat_disabled:
         return None
     try:
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
             model=GROQ_MODEL,
             messages=messages,
-            max_tokens=512,
+            max_tokens=300,
             temperature=0.7,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        logger.warning(f"Groq chat failed: {e}")
+        err = str(e)
+        if "429" in err or "rate_limit" in err.lower():
+            _groq_chat_disabled = True
+            logger.warning("Groq 70B chat rate limited, disabling for session")
+        else:
+            logger.warning(f"Groq chat failed: {err[:120]}")
+        return None
+
+
+def _chat_groq_backup(messages: list[dict]) -> str | None:
+    global _groq_backup_chat_disabled
+    if not GROQ_API_KEY or _groq_backup_chat_disabled:
+        return None
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model=GROQ_BACKUP_MODEL,
+            messages=messages,
+            max_tokens=300,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        err = str(e)
+        if "429" in err or "rate_limit" in err.lower():
+            _groq_backup_chat_disabled = True
+            logger.warning("Groq 8B chat rate limited, disabling for session")
+        else:
+            logger.warning(f"Groq backup chat failed: {err[:120]}")
         return None
 
 
@@ -196,26 +232,84 @@ def _chat_anthropic(messages: list[dict]) -> str | None:
     if not ANTHROPIC_API_KEY:
         return None
     try:
-        # Anthropic uses system separately from messages
         system = messages[0]["content"] if messages[0]["role"] == "system" else ""
         user_messages = [m for m in messages if m["role"] != "system"]
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         response = client.messages.create(
             model=CLAUDE_MODEL,
-            max_tokens=512,
+            max_tokens=300,
             system=system,
             messages=user_messages,
         )
         return response.content[0].text.strip()
     except Exception as e:
-        logger.warning(f"Anthropic chat failed: {e}")
+        logger.warning(f"Anthropic chat failed: {str(e)[:120]}")
         return None
+
+
+def _chat_offline(messages: list[dict]) -> str | None:
+    """Offline fallback — uses knowledge APIs without LLM for factual queries."""
+    # Get the user's last message
+    user_msg = ""
+    for m in reversed(messages):
+        if m["role"] == "user":
+            user_msg = m["content"]
+            break
+    if not user_msg:
+        return None
+
+    msg_lower = user_msg.lower()
+
+    # Try knowledge enrichment as a direct answer
+    try:
+        # Greetings
+        if any(g in msg_lower for g in ["hello", "hi", "hey", "good morning"]):
+            return "Hello, sir. How can I assist you?"
+        if any(g in msg_lower for g in ["how are you", "how do you do"]):
+            return "I'm operating at peak efficiency, sir. How may I help?"
+        if any(g in msg_lower for g in ["thank", "thanks"]):
+            return "You're welcome, sir. Always happy to help."
+        if any(g in msg_lower for g in ["what can you do", "help", "capabilities"]):
+            return (
+                "I can control your system, play music, make calls, send messages, "
+                "read emails, manage your calendar, search the web, control smart home "
+                "devices, remember things, and much more. Just ask, sir."
+            )
+        if "who are you" in msg_lower or "your name" in msg_lower:
+            return "I'm Jarvis, your personal AI assistant, sir."
+
+        # Try Wikipedia for factual questions
+        from modules.knowledge import instant_answer, wikipedia_summary
+        answer = instant_answer(user_msg)
+        if answer and len(answer) > 20:
+            return answer
+
+        # Try Wikipedia for "what is" questions
+        for trigger in ["what is", "who is", "tell me about", "explain"]:
+            if trigger in msg_lower:
+                topic = user_msg[msg_lower.index(trigger) + len(trigger):].strip().rstrip("?.,!")
+                if topic and len(topic) > 2:
+                    wiki = wikipedia_summary(topic)
+                    if "couldn't find" not in wiki:
+                        return wiki
+                break
+
+    except Exception:
+        pass
+
+    return (
+        "I'm currently offline from my language models, sir. "
+        "I can still run commands — try things like 'what time is it', "
+        "'play music', or 'scan the network'."
+    )
 
 
 _CHAT_PROVIDERS = [
     ("Gemini", _chat_gemini),
     ("Groq", _chat_groq),
+    ("Groq-backup", _chat_groq_backup),
     ("Anthropic", _chat_anthropic),
+    ("Offline", _chat_offline),
 ]
 
 
@@ -225,6 +319,7 @@ def chat(message: str) -> str:
 
     Enriches responses with real-world knowledge from Wikipedia, dictionaries,
     and instant answers when the question is factual.
+    Falls back to offline mode with canned responses + knowledge APIs.
     """
     # Fetch real knowledge to ground the response
     context = _enrich_with_knowledge(message)
@@ -238,4 +333,4 @@ def chat(message: str) -> str:
             _save_exchange(message, result)
             return result
 
-    return "I'm having trouble connecting to my brain right now. Try again in a moment, sir."
+    return "All my systems are currently offline, sir. I can still run commands though."
