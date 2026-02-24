@@ -6,7 +6,7 @@ to the same iCloud account as the Mac.
 
 import subprocess
 
-from core.command_router import register
+from core.command_router import register, set_pending
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -27,6 +27,7 @@ def _osascript(script: str) -> str:
 def make_call(number: str = "") -> str:
     """Make a phone call via FaceTime (uses iPhone Continuity)."""
     if not number or not number.strip():
+        set_pending("phone", "call", "number")
         return "Who would you like me to call, sir? Please say a name or phone number."
     # Clean the number
     clean = number.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
@@ -43,6 +44,7 @@ def make_call(number: str = "") -> str:
 def facetime_call(number: str = "") -> str:
     """Make a FaceTime video call."""
     if not number or not number.strip():
+        set_pending("phone", "facetime", "number")
         return "Who would you like me to FaceTime, sir?"
     clean = number.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
     try:
@@ -57,6 +59,7 @@ def facetime_call(number: str = "") -> str:
 def facetime_audio(number: str = "") -> str:
     """Make a FaceTime audio call."""
     if not number or not number.strip():
+        set_pending("phone", "facetime_audio", "number")
         return "Who would you like me to FaceTime audio, sir?"
     clean = number.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
     try:
@@ -73,8 +76,10 @@ def facetime_audio(number: str = "") -> str:
 def send_imessage(to: str = "", message: str = "") -> str:
     """Send an iMessage/SMS via the Messages app."""
     if not to or not to.strip():
+        set_pending("phone", "send_message", "to")
         return "Who would you like me to send a message to, sir?"
     if not message or not message.strip():
+        set_pending("phone", "send_message", "message", {"to": to})
         return f"What would you like me to say to {to}, sir?"
     # Escape quotes for AppleScript
     safe_msg = message.replace('"', '\\"')

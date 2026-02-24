@@ -5,7 +5,7 @@ import argparse
 from core.voice_input import listen, wait_for_wake_word
 from core.voice_output import speak
 from core.command_parser import parse_command
-from core.command_router import route_command
+from core.command_router import route_command, consume_pending
 from config import EXIT_COMMANDS
 from utils.logger import setup_logger
 
@@ -17,14 +17,19 @@ def handle_command(user_input: str, logger) -> bool:
         return False
 
     try:
-        command = parse_command(user_input)
-        result = route_command(command)
+        # Check if there's a pending follow-up (e.g. "who to call?")
+        result = consume_pending(user_input)
+
+        if result is None:
+            # No pending action — parse as a new command
+            command = parse_command(user_input)
+            result = route_command(command)
+
         speak(result)
 
-        # Feed non-chat results into chat memory so Jarvis has full context
-        if command.category != "chat":
-            from modules.chat import _save_exchange
-            _save_exchange(user_input, result)
+        # Feed results into chat memory so Jarvis has full context
+        from modules.chat import _save_exchange
+        _save_exchange(user_input, result)
 
     except Exception as e:
         logger.error(f"Error: {e}")

@@ -8,6 +8,9 @@ logger = get_logger(__name__)
 # Registry: maps (category, action) -> handler function
 HANDLERS: dict[tuple[str, str], callable] = {}
 
+# Pending follow-up: when a handler needs more info from the user
+_pending: dict | None = None
+
 
 def register(category: str, action: str):
     """Decorator to register a command handler."""
@@ -15,6 +18,50 @@ def register(category: str, action: str):
         HANDLERS[(category, action)] = func
         return func
     return decorator
+
+
+def set_pending(category: str, action: str, needs: str, args: dict | None = None):
+    """Store a pending action that needs one more piece of info from the user.
+
+    Args:
+        category: Handler category (e.g. "phone")
+        action: Handler action (e.g. "call")
+        needs: The arg name to fill with the user's next input (e.g. "number")
+        args: Any args already collected
+    """
+    global _pending
+    _pending = {
+        "category": category,
+        "action": action,
+        "needs": needs,
+        "args": args or {},
+    }
+    logger.info(f"Pending action set: {category}.{action} needs '{needs}'")
+
+
+def consume_pending(user_input: str) -> str | None:
+    """Check for a pending follow-up action. If one exists, fill in the missing
+    arg with user_input, execute the handler, and return the result.
+    Returns None if no pending action.
+    """
+    global _pending
+    if _pending is None:
+        return None
+
+    pending = _pending
+    _pending = None
+
+    handler = HANDLERS.get((pending["category"], pending["action"]))
+    if not handler:
+        return None
+
+    # Fill in the missing argument
+    pending["args"][pending["needs"]] = user_input.strip()
+    logger.info(
+        f"Resuming {pending['category']}.{pending['action']} "
+        f"with {pending['needs']}='{user_input.strip()}'"
+    )
+    return handler(**pending["args"])
 
 
 _loaded = False
