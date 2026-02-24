@@ -38,6 +38,10 @@ USER_AGENT = (
 PYAUTOGUI_PAUSE = 0.5              # Seconds between PyAutoGUI actions
 PYAUTOGUI_FAILSAFE = True          # Move mouse to corner to abort
 
+# Email settings (optional — Gmail with App Password)
+GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+
 # Command settings
 WAKE_WORD = "jarvis"
 EXIT_COMMANDS = ["exit", "quit", "goodbye", "shut down", "stop"]

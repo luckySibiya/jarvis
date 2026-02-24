@@ -29,6 +29,12 @@ def _load_handlers():
     import modules.desktop_automation   # noqa: F401
     import modules.web_scraper          # noqa: F401
     import modules.system_commands      # noqa: F401
+    import modules.system_control       # noqa: F401
+    import modules.volume_control       # noqa: F401
+    import modules.spotify_control      # noqa: F401
+    import modules.timer                # noqa: F401
+    import modules.calculator           # noqa: F401
+    import modules.email_sender         # noqa: F401
     import modules.chat                 # noqa: F401
     _loaded = True
 
