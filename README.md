@@ -157,6 +157,4 @@ Then just type `jarvis` in any terminal.
 - **BeautifulSoup4 + requests** — web scraping
 - **Groq / Google Gemini / Anthropic** — LLM APIs for command parsing & chat
 
-## License
 
-MIT
